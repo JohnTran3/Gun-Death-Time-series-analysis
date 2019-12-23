@@ -1,0 +1,104 @@
+---
+title: "STA 137 Project"
+author: "John Tran"
+date: "December 2, 2019"
+output: html_document
+---
+###1
+```{r, echo=FALSE}
+
+library(astsa)
+GD <- read.table("C:/Users/nbafl/OneDrive/sta 137/GD.dat.txt")
+
+```
+
+
+
+```{r, echo=FALSE}
+par(mfrow=c(2,1))
+ts_sales <- ts(GD[,1], start = c(1980,1), end = c(1998,11), frequency = 12)
+ts_deaths <- ts(GD[,2], start = c(1980,1), end = c(1998,11), frequency = 12)
+tsplot(ts_sales,main = "",ylab = "Fire Arm Sales", col = 4, margin = 0)
+tsplot(ts_deaths, main = "", ylab = " Fire Arm Deaths", col = 4, margin = 0 )
+qqnorm(ts_sales, main = "Fire Arm Sales", col = 4);qqline(ts_sales, col =2, lwd =2)
+qqnorm(ts_deaths,main = "Fire Arm Death", col = 4);qqline(ts_deaths, col =2, lwd =2)
+```
+
+
+
+```{r, echo=FALSE}
+par(mfrow = c(2,1))
+tsplot(diff(ts_sales, lag = 12),main = "Monthly Gun Sales over 1980- 1998",ylab = "Fire Arm Sales", col = 4, margin = 0)
+tsplot(diff(ts_deaths, lag = 12 ),main =  "Monthly Gun deaths over 1980 -1998", ylab = "Fire Arm Deaths", col = 4, margin = 0)
+par(mfrow = c(2,2))
+
+#pacf and acf for gun sales
+pacf(ts_sales)
+acf(ts_sales)
+#pacf and acf for gun deaths
+pacf(ts_deaths)
+acf(ts_deaths)
+#pacf and acf for gun sale and gun deaths
+#par(mfrow = c(2,2))
+#pacf(diff(ts_sales))
+#acf(diff(ts_sales))
+#pacf(diff(ts_deaths))
+#acf(diff(ts_deaths))
+par(mfrow = c(2,2))
+pacf(diff(diff(ts_sales, lag =12)))
+acf(diff(diff(ts_sales, lag =12)))
+pacf(diff(diff(ts_deaths, lag =12)))
+acf(diff(diff(ts_deaths, lag =12)))
+par(mfrow =c(2,1))
+tsplot(diff(diff(ts_sales,lag = 12)), main = "Monthly Gun Sales over 1980- 1998",ylab = "Fire Arm Sales", col = 4, margin = 0)
+tsplot(diff(diff(ts_deaths, lag = 12)), main = "Monthly Gun deaths over 1980 -1998",ylab = "Fire Arm Deaths", col = 4,margin = 0)
+
+```
+Based on the ACF and PACF of the transformed Gun Sales and Deaths, this model looks an SARIMA model.
+
+```{r, echo=FALSE}
+ccf(diff(ts_sales), diff(ts_deaths))
+ccf(diff(diff(ts_deaths,12)), diff(diff(ts_sales,12)),ylab = "CCF",type ="covariance")
+ccf(ts_deaths,ts_sales,ylab = "CCF")
+```
+The 
+
+```{r, echo=FALSE}
+m1 <- sarima(ts_deaths,p=3,d = 1, q =2,P=3,D=1, Q=2, S=12)
+m1
+m2 <- sarima(ts_deaths,p=3,d = 1, q =1,P=2,D=1, Q=1, S=12)#best
+m2
+#m3<-sarima(ts_deaths,p=11,d = 1, q =2,P=11,D=1, Q=2, S=12)
+#m3
+m4 <- sarima(ts_deaths, p =3,d =0, q = 1,3,0,1,12)
+m4
+m11 <- sarima(ts_sales, p =11 , d = 1, q=3,2,1,3,12)#best
+m11#best
+m22 <- sarima(ts_sales, 1,1,3,1,1,3,12)
+m22
+m33 <- sarima(ts_sales,2,1,3,2,1,3,12)
+m33
+
+
+```
+
+```{r, echo=FALSE}
+library("astsa")
+trend = time(ts_deaths); 
+fit = lm(ts_deaths~trend + ts_sales, na.action=NULL)
+
+acf2(resid(fit), 52) # implies AR2
+
+m <-sarima(ts_deaths, 2,1,3, xreg=cbind(trend, ts_sales))
+par(mfrow = c(4,2))
+acf2(resid(m$fit))
+acf2(resid(fit),)
+
+
+```
+
+
+```{r, ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+```
+
+
